@@ -1,0 +1,18 @@
+[project]
+name = "share-health"
+version = "0.1.0"
+description = "Open-source PPH early warning and response engine for low-resource maternity wards"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[tool.setuptools]
+packages = ["share"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
