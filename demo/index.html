@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SHARE Midwife Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F6F7F8;--card:#FFFFFF;--ink:#163B42;--muted:#5B757A;--line:#D5E4F2;--brand:#2196F3;--deep:#1873B0;
+--green:#2E8B57;--green-bg:#E3F4EA;--amber:#B26A00;--amber-bg:#FFF1D6;--red:#C62828;--red-bg:#FDE4E1;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1E22;--card:#16292E;--ink:#E6F0F2;--muted:#9DB4B8;--line:#24424A;
+--green-bg:#173A29;--amber-bg:#3D2E12;--red-bg:#3F1A18;--green:#6FD39A;--amber:#F2B451;--red:#FF8A80}}
+:root[data-theme="dark"]{--bg:#0F1E22;--card:#16292E;--ink:#E6F0F2;--muted:#9DB4B8;--line:#24424A;--green-bg:#173A29;--amber-bg:#3D2E12;--red-bg:#3F1A18;--green:#6FD39A;--amber:#F2B451;--red:#FF8A80}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Montserrat,system-ui,sans-serif;font-size:15px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:16px 20px;background:var(--deep);color:#fff}
+header h1{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:20px;margin:0;letter-spacing:.5px}
+header small{opacity:.85;font-size:12px}
+main{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;padding:16px;max-width:1200px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--brand);margin:0 0 10px}
+.row{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}
+.muted{color:var(--muted);font-size:13px}
+.badge{border-radius:12px;padding:14px;text-align:center;font-weight:700;font-size:26px;letter-spacing:1px;transition:all .4s}
+.green{background:var(--green-bg);color:var(--green)}.amber{background:var(--amber-bg);color:var(--amber)}.red{background:var(--red-bg);color:var(--red)}
+.reasons{margin:10px 0 0;padding-left:18px;font-size:14px}
+button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--brand);color:#fff}
+button.ghost{background:transparent;color:var(--brand);border:1px solid var(--brand)}button:disabled{opacity:.45;cursor:not-allowed}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+svg{width:100%;height:auto;display:block}
+.big{font-size:30px;font-weight:700}
+.alert{margin-top:12px;border-radius:10px;padding:12px;font-weight:700;text-align:center}
+input[type=range]{width:100%}label{font-size:13px;color:var(--muted)}
+.bar{height:12px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:8px}.bar>div{height:100%;width:0;background:var(--brand);transition:width .5s}
+footer{max-width:1200px;margin:0 auto;padding:0 16px 24px;font-size:12px;color:var(--muted)}
+.vit{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.vit input{width:100%;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+</style>
+</head>
+<body>
+<header><div><h1>SHARE · Midwife dashboard</h1><small>Demo with synthetic data. Not for clinical use.</small></div><small id="clock">Labour hour 0 of 12</small></header>
+<main>
+<section class="card">
+<h2>Mother</h2>
+<div class="row"><span>Bed</span><b>Labour ward, bed 3</b></div>
+<div class="row"><span>Weight</span><b>58 kg</b></div>
+<div class="row"><span>Haemoglobin</span><b>9.2 g/dL (anaemic)</b></div>
+<div class="row"><span>Oxytocin drip</span><b id="oxy">not started</b></div>
+<div class="row"><span>Previous PPH</span><b>No</b></div>
+<h2 style="margin-top:16px">Uterine signal (EHG median frequency)</h2>
+<svg id="chart" viewBox="0 0 320 170" role="img" aria-label="Median frequency of the uterine signal by labour hour"></svg>
+<p class="muted">As the uterus tires, its electrical signal slows. Five abdominal sensors, no optical sensors.</p>
+</section>
+<section class="card">
+<h2>PPH risk in labour</h2>
+<div id="badge" class="badge green">GREEN</div>
+<p class="muted" style="text-align:center;margin:6px 0 0">Risk score <b id="score">0.05</b></p>
+<ul id="reasons" class="reasons"><li>Press Play to start labour</li></ul>
+<div class="controls"><button id="play">Play labour</button><button class="ghost" id="reset">Reset</button></div>
+<h2 style="margin-top:18px">Personal E-MOTIVE trigger</h2>
+<div class="big" id="trigger">300 ml</div>
+<p class="muted">WHO 2025: 300 ml plus an abnormal sign, or 500 ml. SHARE can only bring E-MOTIVE earlier, never later.</p>
+</section>
+<section class="card">
+<h2>After birth: calibrated drape</h2>
+<label for="loss">Blood loss read from drape: <b id="lossv">0 ml</b></label>
+<input id="loss" type="range" min="0" max="600" step="25" value="0">
+<div class="vit" style="margin-top:10px">
+<div><label>Pulse</label><input id="hr" type="number" value="96"></div>
+<div><label>Systolic</label><input id="sbp" type="number" value="104"></div>
+<div><label>Diastolic</label><input id="dbp" type="number" value="66"></div>
+</div>
+<div class="row" style="margin-top:8px"><span>Shock index</span><b id="si">0.92</b></div>
+<div class="row"><span>Mean arterial pressure</span><b id="map">78.7 mmHg</b></div>
+<div id="emotive" class="alert green">Monitor: keep measuring</div>
+<h2 style="margin-top:18px">Compression belt</h2>
+<div class="controls"><button id="confirm">Staff confirm PPH</button>
+<button class="ghost" id="tone">Uterus: soft</button></div>
+<div class="controls"><button id="start" disabled>Start compression</button><button class="ghost" id="stop">Stop</button></div>
+<p class="muted" id="cstatus">Compression locked until staff confirm PPH.</p>
+<div class="bar"><div id="pressure"></div></div>
+</section>
+</main>
+<footer>SHARE Health · open source (Apache 2.0) · Decision support only: clinicians diagnose PPH and start and stop every action.</footer>
+<script>
+const W={fatigue:9,oxy:0.15,anaemia:0.8,prev:1.2,long:0.6},INT=-3;
+let hour=0,timer=null,mfs=[],level='green',confirmed=false,soft=true,running=false,cyc=null;
+const $=id=>document.getElementById(id);
+function mf(h){return 0.70-(0.25*(h-1)/11)+(Math.sin(h*1.7)*0.006);}
+function fatigue(){if(mfs.length<=3)return 0;const b=(mfs[0]+mfs[1]+mfs[2])/3,r=mfs.slice(-3).reduce((a,c)=>a+c,0)/3;return Math.max(0,(b-r)/b);}
+function assess(){const f=fatigue(),oxy=Math.max(0,hour-4),hb=9.2;
+const c={fatigue:W.fatigue*f,oxy:W.oxy*oxy,anaemia:hb<11?W.anaemia:0,prev:0,long:hour>12?W.long:0};
+const z=INT+Object.values(c).reduce((a,b)=>a+b,0),s=1/(1+Math.exp(-z));
+const lv=s>=0.6?'red':s>=0.3?'amber':'green';
+const lab={fatigue:`Uterine signal slowed ${Math.round(f*100)}%`,oxy:`Oxytocin for ${oxy} h`,anaemia:`Haemoglobin 9.2 g/dL`};
+const reasons=Object.entries(c).filter(([k,v])=>v>0.3&&lab[k]).sort((a,b)=>b[1]-a[1]).map(([k])=>lab[k]);
+return {s,lv,reasons};}
+function trigger(high){let fr=0.045*(9.2/11);if(high)fr*=0.85;const raw=58*100*fr;return Math.max(150,Math.min(300,Math.round(raw/50)*50));}
+function draw(){const svg=$('chart'),x=h=>30+(h-1)*25,y=v=>150-(v-0.4)*400;let s=`<line x1="30" y1="150" x2="310" y2="150" stroke="currentColor" opacity=".25"/>`;
+[0.4,0.5,0.6,0.7].forEach(v=>{s+=`<text x="2" y="${y(v)+4}" font-size="10" fill="currentColor" opacity=".6">${v.toFixed(1)}</text><line x1="30" y1="${y(v)}" x2="310" y2="${y(v)}" stroke="currentColor" opacity=".08"/>`});
+s+=`<text x="300" y="165" font-size="10" fill="currentColor" opacity=".6" text-anchor="end">labour hour</text><text x="34" y="12" font-size="10" fill="currentColor" opacity=".6">Hz</text>`;
+if(mfs.length){s+=`<polyline fill="none" stroke="#2196F3" stroke-width="3" points="${mfs.map((v,i)=>x(i+1)+','+y(v)).join(' ')}"/>`;
+mfs.forEach((v,i)=>s+=`<circle cx="${x(i+1)}" cy="${y(v)}" r="3.5" fill="#2196F3"/>`);}
+svg.innerHTML=s;svg.style.color=getComputedStyle(document.body).color;}
+function render(){const r=assess();level=r.lv;const b=$('badge');b.className='badge '+r.lv;b.textContent=r.lv.toUpperCase();
+$('score').textContent=r.s.toFixed(2);$('reasons').innerHTML=(r.reasons.length?r.reasons:['No risk factors yet']).map(t=>`<li>${t}</li>`).join('');
+$('clock').textContent=`Labour hour ${hour} of 12`;$('oxy').textContent=hour>4?`running ${hour-4} h`:(hour>=4?'started':'not started');
+$('trigger').textContent=trigger(r.lv!=='green')+' ml';draw();updateEmotive();}
+function step(){if(hour>=12){clearInterval(timer);timer=null;$('play').textContent='Play labour';return;}hour++;mfs.push(mf(hour));render();}
+$('play').onclick=()=>{if(timer){clearInterval(timer);timer=null;$('play').textContent='Play labour';return;}if(hour>=12){reset();}$('play').textContent='Pause';timer=setInterval(step,900);};
+function reset(){clearInterval(timer);timer=null;hour=0;mfs=[];$('play').textContent='Play labour';render();$('reasons').innerHTML='<li>Press Play to start labour</li>';}
+$('reset').onclick=reset;
+function updateEmotive(){const loss=+$('loss').value,hr=+$('hr').value,sbp=+$('sbp').value,dbp=+$('dbp').value;$('lossv').textContent=loss+' ml';
+const si=hr/sbp,map=(sbp+2*dbp)/3;$('si').textContent=si.toFixed(2);$('map').textContent=map.toFixed(1)+' mmHg';
+const abn=hr>100||sbp<100||dbp<60||si>1,t=trigger(level!=='green'),e=$('emotive');
+if(loss>=500||(loss>=300&&abn)){e.className='alert red';e.textContent='START E-MOTIVE: WHO criteria met';}
+else if(loss>=t){e.className='alert red';e.textContent=`START E-MOTIVE: personal trigger ${t} ml reached`;}
+else if(loss>=t-50&&loss>0){e.className='alert amber';e.textContent=`Approaching personal trigger (${t} ml)`;}
+else{e.className='alert green';e.textContent='Monitor: keep measuring';}}
+['loss','hr','sbp','dbp'].forEach(id=>$(id).oninput=updateEmotive);
+function cs(t){$('cstatus').textContent=t;}
+$('confirm').onclick=()=>{confirmed=true;$('start').disabled=false;cs('PPH confirmed by staff. Compression available if the uterus is soft.');};
+$('tone').onclick=()=>{soft=!soft;$('tone').textContent='Uterus: '+(soft?'soft':'firm');if(!soft&&running)stop('uterus firm');};
+$('start').onclick=()=>{if(!confirmed)return cs('Blocked: staff must confirm PPH first.');if(!soft)return cs('Blocked: uterus is firm. Examine for tears or retained tissue.');
+running=true;cs('Compression cycles running. Pressure capped at 60 mmHg.');let on=false;clearInterval(cyc);cyc=setInterval(()=>{on=!on;$('pressure').style.width=on?'85%':'15%';},1200);};
+function stop(reason){running=false;clearInterval(cyc);$('pressure').style.width='0';cs('Stopped and deflated ('+reason+').');}
+$('stop').onclick=()=>stop('staff stop');
+reset();
+</script>
+</body>
+</html>
